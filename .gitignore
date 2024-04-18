@@ -1,0 +1,6 @@
+myenv
+.env*
+processing.log
+venv
+logs/
+*pyc

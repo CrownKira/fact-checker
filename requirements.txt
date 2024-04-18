@@ -1,0 +1,7 @@
+openai
+python-dotenv
+spacy
+tiktoken
+groq
+scikit-learn
+aiofiles
