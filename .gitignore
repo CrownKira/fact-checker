@@ -1,5 +1,5 @@
 myenv
-.env*
+.env
 processing.log
 venv
 logs/
