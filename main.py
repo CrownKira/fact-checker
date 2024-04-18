@@ -51,7 +51,7 @@ GROQ_MODELS = [
 
 # coze bot ids
 COZE_BOTS = [
-    # "7347642294285795336",  # Kar Wi's Fact Checker Bot
+    "7351253103510978578",  # Kar Wi's Fact Checker Bot
 ]
 
 

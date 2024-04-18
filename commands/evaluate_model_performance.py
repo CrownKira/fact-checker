@@ -6,6 +6,16 @@ true_labels_file = "reference_output/DataSet_Misinfo_first100.correct"
 predicted_labels_file = "predicted_output/DataSet_Misinfo_first100.predicted"
 # categories = ["SUPPORTS", "REFUTES", "mixed"]
 categories = ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
+# categories = [
+#     "Not Misinformation",
+#     "Misinformation",
+#     "Medical Misinformation",
+#     "Election Misinformation",
+#     "Dangerous Misinformation",
+#     "Fake News",
+#     "Conspiracy Theory",
+#     "Climate Change Misinformation",
+# ]
 
 
 def read_labels(file_path):
