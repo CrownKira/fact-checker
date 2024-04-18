@@ -24,8 +24,6 @@ from clients.coze import AsyncCoze
 load_dotenv()
 
 
-# TUNABLE CONFIGS
-
 # CONFIGS: MODEL
 OPENAI_MODELS = [
     "gpt-3.5-turbo",
@@ -53,15 +51,11 @@ GROQ_MODELS = [
 
 # coze bot ids
 COZE_BOTS = [
-    "7351253103510978578",  # GEC
-    "7347642294285795336",  # Fact Checker Bot
+    # "7347642294285795336",  # Kar Wi's Fact Checker Bot
 ]
 
 
 # change model here
-# MODEL_NAME = OPENAI_JSON_MODE_SUPPORTED_MODELS[0]
-# MODEL_NAME = TOGETHER_AI_MODELS[1]
-# MODEL_NAME = GROQ_MODELS[2]
 MODEL_NAME = COZE_BOTS[0]
 
 
@@ -70,17 +64,10 @@ TEXT_DELIMITER = "\n"
 KNOWLEDGE_CUTOFF = "April 2023"
 
 
-# CONFIGS: RAG
-
-
-# NON-TUNABLE CONFIGS
-
 # CONFIGS: INPUT PREPROCESSING
-# MAX_TOKENS = 1024
 MAX_TOKENS = 3000
 BATCH_SIZE_IN_TOKENS = int(MAX_TOKENS * 0.7)
 MAX_LINES_PER_BATCH = 1  # Maximum number of lines allowed in each batch
-# CHUNK_OVERLAP_IN_TOKENS = 50
 
 
 # CONFIGS: PATHS
@@ -120,6 +107,7 @@ INCLUDE_INPUT_IN_CSV = True
 INCLUDE_ANSWER_IN_CSV = True
 
 
+# for coze, please manually define the prompt on the platform
 FACT_CHECK_PROMPT = f"""You are a language model trained to evaluate the truthfulness of statements based on your knowledge, which is current up to {KNOWLEDGE_CUTOFF}. Your tasks are to:
 1. Read the user-provided statement.
 2. Evaluate the statement based on your knowledge up to {KNOWLEDGE_CUTOFF}.
@@ -214,7 +202,6 @@ class RateLimiter:
         self.semaphore.release()
 
 
-# rate_limiter = None  # Declare rate_limiter at the global scope for visibility
 rate_limiter = RateLimiter(QPM_LIMIT)
 
 
