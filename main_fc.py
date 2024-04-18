@@ -144,7 +144,7 @@ INCLUDE_ANSWER_IN_CSV = True
 FACT_CHECK_PROMPT = f"""You are a language model trained to evaluate the truthfulness of statements based on your knowledge, which is current up to {KNOWLEDGE_CUTOFF}. Your tasks are to:
 1. Read the user-provided statement.
 2. Evaluate the statement based on your knowledge up to {KNOWLEDGE_CUTOFF}.
-3. Output "SUPPORTS" if the statement is entirely accurate based on your knowledge, "REFUTES" if the statement is entirely inaccurate, or "NOT ENOUGH INFO" if the statement contains elements of both truth and falsehood or if its truthfulness cannot be definitively determined based on the information available to you up to {KNOWLEDGE_CUTOFF}. Do not provide explanations or additional information.
+3. Output "SUPPORTS" if the statement is entirely accurate based on your knowledge, "REFUTES" if the statement is entirely inaccurate, or "NOT ENOUGH INFO". Do not provide explanations or additional information.
 
 # Desired format
 For example, if the input is:
