@@ -4,7 +4,8 @@ import numpy as np
 
 true_labels_file = "reference_output/DataSet_Misinfo_first100.corrected"
 predicted_labels_file = "corrected_output/DataSet_Misinfo_first100.corrected"
-categories = ["true", "false", "mixed"]
+# categories = ["SUPPORTS", "REFUTES", "mixed"]
+categories = ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
 
 
 def read_labels(file_path):
@@ -18,11 +19,19 @@ def evaluate_performance(true_labels, predicted_labels, categories):
 
     for category in categories:
         true_binary = [1 if label == category else 0 for label in true_labels]
-        predicted_binary = [1 if label == category else 0 for label in predicted_labels]
-        tn, fp, fn, tp = confusion_matrix(true_binary, predicted_binary).ravel()
+        predicted_binary = [
+            1 if label == category else 0 for label in predicted_labels
+        ]
+        tn, fp, fn, tp = confusion_matrix(
+            true_binary, predicted_binary
+        ).ravel()
 
         precision, recall, fscore, _ = precision_recall_fscore_support(
-            true_binary, predicted_binary, beta=0.5, average="binary", zero_division=0
+            true_binary,
+            predicted_binary,
+            beta=0.5,
+            average="binary",
+            zero_division=0,
         )
 
         # Store metrics for macro-average calculation
@@ -46,7 +55,12 @@ def evaluate_performance(true_labels, predicted_labels, categories):
     # print("===============================================")
 
     # Calculate and print micro-averaged metrics
-    micro_precision, micro_recall, micro_fscore, _ = precision_recall_fscore_support(
+    (
+        micro_precision,
+        micro_recall,
+        micro_fscore,
+        _,
+    ) = precision_recall_fscore_support(
         true_labels, predicted_labels, beta=0.5, average="micro"
     )
     print("=========== Overall (Micro-average) ===========")

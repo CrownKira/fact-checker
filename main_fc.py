@@ -144,22 +144,22 @@ INCLUDE_ANSWER_IN_CSV = True
 FACT_CHECK_PROMPT = f"""You are a language model trained to evaluate the truthfulness of statements based on your knowledge, which is current up to {KNOWLEDGE_CUTOFF}. Your tasks are to:
 1. Read the user-provided statement.
 2. Evaluate the statement based on your knowledge up to {KNOWLEDGE_CUTOFF}.
-3. Output "true" if the statement is entirely accurate based on your knowledge, "false" if the statement is entirely inaccurate, or "mixed" if the statement contains elements of both truth and falsehood or if its truthfulness cannot be definitively determined based on the information available to you up to {KNOWLEDGE_CUTOFF}. Do not provide explanations or additional information.
+3. Output "SUPPORTS" if the statement is entirely accurate based on your knowledge, "REFUTES" if the statement is entirely inaccurate, or "NOT ENOUGH INFO" if the statement contains elements of both truth and falsehood or if its truthfulness cannot be definitively determined based on the information available to you up to {KNOWLEDGE_CUTOFF}. Do not provide explanations or additional information.
 
 # Desired format
 For example, if the input is:
 {{"input": "The tallest building in the world as of {KNOWLEDGE_CUTOFF} is the Burj Khalifa."}}
 
 Your output should be JSON only:
-{{"text": "true"}}
+{{"text": "SUPPORTS"}}
 
 Another example, if the input is:
 {{"input": "As of {KNOWLEDGE_CUTOFF}, the iPhone 12 is the latest model of the iPhone."}}
 
 Your output should be JSON only:
-{{"text": "mixed"}}
+{{"text": "NOT ENOUGH INFO"}}
 
-Note: Your evaluations should only be based on factual information available up to {KNOWLEDGE_CUTOFF}. Consider the complexity and nuances of the information when determining if a statement is true, false, or mixed."""
+Note: Your evaluations should only be based on factual information available up to {KNOWLEDGE_CUTOFF}."""
 
 
 # Generate a unique identifier for this run based on the current timestamp
