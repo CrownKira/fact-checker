@@ -8,7 +8,7 @@ load_dotenv()
 
 COZE_ENDPOINT = os.getenv("COZE_ENDPOINT", "")
 COZE_API_KEY = os.getenv("COZE_API_KEY", "")
-COZE_BOT_ID = os.getenv("COZE_BOT_ID", "")
+DEFAULT_COZE_BOT_ID = os.getenv("DEFAULT_COZE_BOT_ID", "")
 
 
 class Message:
@@ -83,7 +83,7 @@ async def main():
     query = """{"input": "The tallest building in the world as of April 2023 is the Burj Khalifa."}"""
 
     model_params = {
-        "bot_id": COZE_BOT_ID,
+        "bot_id": DEFAULT_COZE_BOT_ID,
         "user": "KyleToh",
         "query": query,
         "stream": False,
