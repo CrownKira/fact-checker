@@ -2,8 +2,8 @@ from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import numpy as np
 
 
-true_labels_file = "reference_output/DataSet_Misinfo_first100.corrected"
-predicted_labels_file = "corrected_output/DataSet_Misinfo_first100.corrected"
+true_labels_file = "reference_output/DataSet_Misinfo_first100.correct"
+predicted_labels_file = "predicted_output/DataSet_Misinfo_first100.predicted"
 # categories = ["SUPPORTS", "REFUTES", "mixed"]
 categories = ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
 

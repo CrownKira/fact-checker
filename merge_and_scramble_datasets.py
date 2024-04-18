@@ -7,7 +7,7 @@ FILENAME = "DataSet_Misinfo_first100"
 FILE_PATH_TRUE = f"./datasets/DataSet_Misinfo_TRUE_first100.csv"
 FILE_PATH_FAKE = f"./datasets/DataSet_Misinfo_FAKE_first100.csv"
 MERGED_FILE_PATH = f"./test/{FILENAME}.orig"
-TRUTH_FILE_PATH = f"./reference_output/{FILENAME}.corrected"
+TRUTH_FILE_PATH = f"./reference_output/{FILENAME}.correct"
 
 
 # Increase the maximum CSV field size allowed
@@ -62,8 +62,12 @@ def merge_and_shuffle(
 
 def main():
 
-    merged_texts, truth_values = merge_and_shuffle(FILE_PATH_TRUE, FILE_PATH_FAKE)
-    write_to_files(merged_texts, truth_values, MERGED_FILE_PATH, TRUTH_FILE_PATH)
+    merged_texts, truth_values = merge_and_shuffle(
+        FILE_PATH_TRUE, FILE_PATH_FAKE
+    )
+    write_to_files(
+        merged_texts, truth_values, MERGED_FILE_PATH, TRUTH_FILE_PATH
+    )
 
     print(f"Merged data written to {MERGED_FILE_PATH}")
     print(f"Corresponding truth values written to {TRUTH_FILE_PATH}")

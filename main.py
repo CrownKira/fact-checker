@@ -9,7 +9,6 @@ import csv
 from dotenv import load_dotenv
 import atexit
 from typing import Any, List, Optional
-import spacy
 import logging
 import datetime
 from tiktoken import get_encoding
@@ -19,11 +18,7 @@ from clients.coze import AsyncCoze
 
 
 # python3 main.py
-# python3 commands/evaluate_correction.py
 
-
-# Load the spaCy model outside of the asynchronous function to avoid reloading it multiple times
-nlp = spacy.load("en_core_web_sm")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,7 +66,7 @@ MODEL_NAME = COZE_BOTS[0]
 
 
 # CONFIGS: PROMPT
-TEXT_DELIMITER = "<|NEXT|>\n"
+TEXT_DELIMITER = "\n"
 KNOWLEDGE_CUTOFF = "April 2023"
 
 
@@ -89,12 +84,15 @@ MAX_LINES_PER_BATCH = 1  # Maximum number of lines allowed in each batch
 
 
 # CONFIGS: PATHS
-# ABCN dev set
-CEFR_LEVEL_FILENAME = "DataSet_Misinfo_first100"
-TEST_FILE_PATH = f"test/{CEFR_LEVEL_FILENAME}.orig"
-FINAL_OUTPUT_PATH = f"corrected_output/{CEFR_LEVEL_FILENAME}.corrected"
-CSV_OUTPUT_PATH = f"corrected_output/{CEFR_LEVEL_FILENAME}.corrected.csv"
-REFERENCE_ANSWERS_PATH = f"reference_output/{CEFR_LEVEL_FILENAME}.corrected"
+FACT_CHECK_DATASET_FILENAME = "DataSet_Misinfo_first100"
+TEST_FILE_PATH = f"test/{FACT_CHECK_DATASET_FILENAME}.orig"
+FINAL_OUTPUT_PATH = f"predicted_output/{FACT_CHECK_DATASET_FILENAME}.predicted"
+CSV_OUTPUT_PATH = (
+    f"predicted_output/{FACT_CHECK_DATASET_FILENAME}.predicted.csv"
+)
+REFERENCE_ANSWERS_PATH = (
+    f"reference_output/{FACT_CHECK_DATASET_FILENAME}.correct"
+)
 
 
 # CONFIGS: API
@@ -107,7 +105,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 COZE_API_KEY = os.getenv("COZE_API_KEY", "")
 MAX_RETRIES = 3  # Maximum number of retries for an API call
 RETRY_DELAY = 30  # Delay in seconds before retrying an API
-# QPM_LIMIT = 3  # Queries per minute limit
 QPM_LIMIT = 10  # Queries per minute limit
 
 
@@ -123,24 +120,6 @@ INCLUDE_INPUT_IN_CSV = True
 INCLUDE_ANSWER_IN_CSV = True
 
 
-# TODO: remind fix what issues later
-# GRAMMAR_PROMPT = """You are a language model assistant specializing in grammatical error correction. Your tasks are to:
-# 1. Identify and correct grammatical errors in the user-provided text. Focus on fixing issues related to verb tense, subject-verb agreement, pronoun usage, article application, and other grammatical inaccuracies to ensure the text adheres to {0} English grammar rules.
-# 2. Maintain consistency in grammar correction (e.g., past or present tense) in parts of the input text that you think are contextually related.
-# 3. Return the grammatically corrected text in JSON format, without any explanatory text.
-
-# # Desired format
-# For example, if the input is:
-# {{"input": "Travel by bus is exspensive , bored and annoying .{1}I go to school yesterday .{1}He do not likes the food."}}
-
-# Your output should be JSON only:
-# {{"text": "Travelling by bus is expensive, boring, and annoying.{1}I went to school yesterday.{1}He does not like the food."}}
-
-# Note: The output will be evaluated using the ERRANT scorer, which focuses on the grammatical accuracy of the corrections.""".format(
-#     GRAMMAR_VARIANT, NEXT_TOKEN
-# )
-
-
 FACT_CHECK_PROMPT = f"""You are a language model trained to evaluate the truthfulness of statements based on your knowledge, which is current up to {KNOWLEDGE_CUTOFF}. Your tasks are to:
 1. Read the user-provided statement.
 2. Evaluate the statement based on your knowledge up to {KNOWLEDGE_CUTOFF}.
@@ -151,13 +130,13 @@ For example, if the input is:
 {{"input": "The tallest building in the world as of {KNOWLEDGE_CUTOFF} is the Burj Khalifa."}}
 
 Your output should be JSON only:
-{{"text": "SUPPORTS"}}
+{{"prediction": "SUPPORTS"}}
 
 Another example, if the input is:
 {{"input": "As of {KNOWLEDGE_CUTOFF}, the iPhone 12 is the latest model of the iPhone."}}
 
 Your output should be JSON only:
-{{"text": "NOT ENOUGH INFO"}}
+{{"prediction": "NOT ENOUGH INFO"}}
 
 Note: Your evaluations should only be based on factual information available up to {KNOWLEDGE_CUTOFF}."""
 
@@ -378,18 +357,18 @@ async def ask_llm(
                 f"{YELLOW}Received raw response for batch {batch_number}/{total_batches}: {response}{RESET}"
             )
             content_json = json.loads(response)
-            response_text = content_json.get("text")
+            response_text = content_json.get("prediction")
             if response_text is None:
                 raise ValueError("'text' field not found in response JSON")
 
             # TODO: extract to a function
-            corrected_lines = []
+            response_lines = []
             for line in response_text.split(TEXT_DELIMITER):
-                corrected_lines.append(line.strip())
+                response_lines.append(line.strip())
 
-            final_text = "\n".join(corrected_lines)
+            final_text = "\n".join(response_lines)
 
-            assert len(corrected_lines) == len(
+            assert len(response_lines) == len(
                 text.split("\n")
             ), "Number of lines in response_text does not match the number of lines in text."
 
@@ -421,7 +400,7 @@ async def ask_llm(
     raise RuntimeError("Unexpected execution path")
 
 
-async def correct_grammar_and_write_csv(
+async def predict_label_and_write_csv(
     client: Any,
     text: str,
     batch_number: int,
@@ -431,7 +410,7 @@ async def correct_grammar_and_write_csv(
     correct_answer: str,
 ) -> str:
     async with rate_limiter:
-        corrected_text = await ask_llm(
+        predicted_label = await ask_llm(
             client,
             FACT_CHECK_PROMPT,
             text,
@@ -440,26 +419,22 @@ async def correct_grammar_and_write_csv(
             model_name,
         )
 
-        # TODO: better way?
-        # Process the corrected text with spaCy
-        doc = nlp(corrected_text.strip())
-        processed_text = " ".join(token.text for token in doc)
-        stripped_lines = [line.strip() for line in processed_text.split("\n")]
-        processed_text = "\n".join(stripped_lines)
-
         logging.info(
-            f"{GREEN}Received correction for batch {batch_number}/{total_batches}: {processed_text}{RESET}"
+            f"{GREEN}Received prediction for batch {batch_number}/{total_batches}: {predicted_label}{RESET}"
         )
 
-        # Write the batch number and corrected text to the CSV
-        row = {"Batch Number": batch_number, "Corrected Text": processed_text}
+        # Write the batch number and predicted text to the CSV
+        row = {
+            "Batch Number": batch_number,
+            "Predicted Label": predicted_label,
+        }
         if INCLUDE_INPUT_IN_CSV:
             row["Input Text"] = text
         if INCLUDE_ANSWER_IN_CSV:
-            row["Correct Answer"] = correct_answer
+            row["Correct Label"] = correct_answer
 
         await csv_writer.writerow(row)
-        return processed_text
+        return predicted_label
 
 
 # Function to check which batches have already been processed
@@ -532,8 +507,8 @@ async def process_file(
         if INCLUDE_INPUT_IN_CSV:
             fieldnames.append("Input Text")
         if INCLUDE_ANSWER_IN_CSV:
-            fieldnames.append("Correct Answer")
-        fieldnames.append("Corrected Text")
+            fieldnames.append("Correct Label")
+        fieldnames.append("Predicted Label")
 
         csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         if should_write_header:
@@ -553,7 +528,7 @@ async def process_file(
             if batch_number in processed_batches:
                 continue
             tasks.append(
-                correct_grammar_and_write_csv(
+                predict_label_and_write_csv(
                     client,
                     batch_text,
                     batch_number,
@@ -567,7 +542,7 @@ async def process_file(
         await asyncio.gather(*tasks)
 
 
-def generate_corrected_file_from_csv(csv_output_path: str, output_path: str):
+def generate_prediction_file_from_csv(csv_output_path: str, output_path: str):
     with open(
         csv_output_path, mode="r", newline="", encoding="utf-8"
     ) as csv_file:
@@ -580,10 +555,10 @@ def generate_corrected_file_from_csv(csv_output_path: str, output_path: str):
         output_path, mode="w", newline="", encoding="utf-8"
     ) as output_file:
         for row in sorted_rows:
-            if "Corrected Text" in row:
-                corrected_lines = row["Corrected Text"].split("\n")
-                for corrected_line in corrected_lines:
-                    output_file.write(corrected_line + "\n")
+            if "Predicted Label" in row:
+                predicted_labels = row["Predicted Label"].split("\n")
+                for predicted_label in predicted_labels:
+                    output_file.write(predicted_label + "\n")
 
 
 # Function to log a divider when the program exits
@@ -602,7 +577,7 @@ def prompt_for_evaluation():
     if user_response == "yes":
         try:
             # Execute the evaluation script
-            print("Evaluating the corrections...")
+            print("Evaluating the predictions...")
             # TODO: replace
             subprocess.run(
                 ["python3", "commands/evaluate_model_performance.py"],
@@ -626,8 +601,8 @@ if __name__ == "__main__":
     )
     logging.info("Starting to process the file...")
     asyncio.run(main())
-    logging.info("Generating the corrected file from CSV...")
-    generate_corrected_file_from_csv(CSV_OUTPUT_PATH, FINAL_OUTPUT_PATH)
+    logging.info("Generating the predicted file from CSV...")
+    generate_prediction_file_from_csv(CSV_OUTPUT_PATH, FINAL_OUTPUT_PATH)
     logging.info("File processing completed.")
     prompt_for_evaluation()
     logging.info("=" * 80)

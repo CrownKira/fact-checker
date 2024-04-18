@@ -29,11 +29,6 @@
    pip3 install -r requirements.txt
    ```
 
-5. **Download the Necessary spaCy Language Model:**
-   ```bash
-   python3 -m spacy download en_core_web_sm
-   ```
-
 ## Usage
 
 1. **Configure Environment Variables:**
@@ -47,4 +42,4 @@
    ```
 
 3. **Check Outputs:**
-   Navigate to the `outputs` directory to access corrected text files and CSV outputs.# fact-checker
+   Navigate to the `predicted_output` directory to access predicted label files and CSV outputs.
